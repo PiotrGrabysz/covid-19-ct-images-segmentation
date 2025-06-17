@@ -3,33 +3,71 @@ import os
 from pathlib import Path
 from typing import Self
 
+import albumentations
+import cv2
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
+
+SOURCE_SIZE = 512
+TARGET_SIZE = 256
 
 
 def main(args):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Running on Device {device}")
 
-    train_dataset = NumpyDataset.from_path(args.train)
-    test_dataset = NumpyDataset.from_path(args.test)
+    # Augmentations
+    train_transforms = albumentations.Compose(
+        [
+            albumentations.Rotate(limit=360, p=0.9, border_mode=cv2.BORDER_REPLICATE),
+            albumentations.HorizontalFlip(p=0.5),
+            albumentations.ElasticTransform(
+                alpha=300,  # Strength of the distortion
+                sigma=10,  # Smoothing
+                interpolation=cv2.INTER_NEAREST,
+                border_mode=cv2.BORDER_REFLECT_101,
+                p=0.5,
+            ),
+            albumentations.RandomSizedCrop(
+                min_max_height=(int(SOURCE_SIZE * 0.75), SOURCE_SIZE),
+                size=(TARGET_SIZE, TARGET_SIZE),
+                interpolation=cv2.INTER_NEAREST,
+            ),
+            # ToTensorV2(),
+        ]
+    )
 
-    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-    test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
+    test_transforms = albumentations.Compose(
+        [
+            albumentations.Resize(TARGET_SIZE, TARGET_SIZE, interpolation=cv2.INTER_NEAREST),
+        ]
+    )
+
+    train_dataset = NumpyDataset.from_path(args.train, transforms=train_transforms)
+    test_dataset = NumpyDataset.from_path(args.test, transforms=test_transforms)
+
+    train_dataloader = DataLoader(
+        train_dataset, batch_size=args.batch_size, shuffle=True
+    )
+    test_dataloader = DataLoader(
+        test_dataset, batch_size=args.batch_size, shuffle=False
+    )
 
 
 class NumpyDataset(Dataset):
-    def __init__(self, images: np.ndarray, masks: np.ndarray, transforms=None):
+    def __init__(
+        self, images: np.ndarray, masks: np.ndarray, transforms: A.Compose | None = None
+    ):
         self.images = images
         self.masks = masks
         self.transforms = transforms
 
     @classmethod
-    def from_path(cls, data_path: Path) -> Self:
+    def from_path(cls, data_path: Path, transforms: A.Compose | None = None) -> Self:
         images = np.load(data_path / "images.npy").astype(np.float32)
         masks = np.load(data_path / "masks.npy").astype(np.int8)
-        return NumpyDataset(images, masks)
+        return NumpyDataset(images, masks, transforms)
 
     def __len__(self):
         return len(self.images)
