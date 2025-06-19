@@ -10,12 +10,28 @@ import segmentation_models_pytorch as smp
 import torch
 from albumentations.pytorch import ToTensorV2
 from lightning import LightningModule, Trainer
+from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
+from lightning.pytorch.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader, Dataset
 
 from src import metrics
 
 SOURCE_SIZE = 512
 TARGET_SIZE = 256
+
+METRIC_TO_MONITOR = "val_f1_glass_and_consolidation"
+
+checkpoint_callback = ModelCheckpoint(
+    monitor=METRIC_TO_MONITOR, mode="max", save_top_k=1, filename="best-model"
+)
+
+early_stop_callback = EarlyStopping(
+    monitor=METRIC_TO_MONITOR,
+    mode="max",
+    patience=3,  # stop if no improvement after 5 epochs
+    verbose=True,
+)
+tensorboard_logger = TensorBoardLogger("lightning_logs", name="covid_segmentation")
 
 
 def main(args):
@@ -66,12 +82,11 @@ def main(args):
 
     trainer = Trainer(
         max_epochs=5,
-        # callbacks=[checkpoint_callback],
-        # accelerator="auto",
-        # precision="16-mixed"  # if using GPU with mixed precision
+        callbacks=[checkpoint_callback, early_stop_callback],
+        logger=tensorboard_logger,
         log_every_n_steps=5,
     )
-
+    # optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=3)
     trainer.fit(model, train_dataloader, test_dataloader)
 
 
@@ -125,7 +140,7 @@ class UNet(LightningModule):
             activation=None,
         )
 
-        self.loss_fn = build_loss()
+        self.loss_fn = build_loss(alpha=0.2)
         self.lr = lr
 
         self.preconv = torch.nn.Conv2d(1, 3, kernel_size=1)
@@ -136,40 +151,40 @@ class UNet(LightningModule):
         return mask
 
     def training_step(self, batch, batch_idx):
+        print(f"DEBUG: in TRAIN step")
         return self.shared_step(batch, "train")
 
     def validation_step(self, batch, batch_idx):
+        print(f"DEBUG: in VAL step")
         return self.shared_step(batch, "val")
 
     def shared_step(self, batch, stage="train"):
-        x, y = batch  # x: (N, 1, H, W), y: (N, 4, H, W)
-        logits = self(x)  # (N, 4, H, W)
-        loss = self.loss_fn(logits, y)
+        images, true_masks = batch
+        logits = self(images)  # (N, 4, H, W)
+        loss = self.loss_fn(logits, true_masks)
 
         probs = torch.sigmoid(logits)
+
         self.log(f"{stage}_loss", loss, prog_bar=True)
-        self.log(f"{stage}_f1_glass", metrics.fscore_glass(y, probs), prog_bar=True)
+        self.log(
+            f"{stage}_f1_glass", metrics.fscore_glass(true_masks, probs), prog_bar=True
+        )
         self.log(
             f"{stage}_f1_consolidation",
-            metrics.fscore_consolidation(y, probs),
+            metrics.fscore_consolidation(true_masks, probs),
             prog_bar=True,
         )
         self.log(
             f"{stage}_f1_lungs_background",
-            metrics.fscore_lungs_other(y, probs),
+            metrics.fscore_lungs_other(true_masks, probs),
             prog_bar=True,
         )
         self.log(
             f"{stage}_f1_glass_and_consolidation",
-            metrics.fscore_glass_and_consolidation(y, probs),
+            metrics.fscore_glass_and_consolidation(true_masks, probs),
             prog_bar=True,
         )
         return loss
-
-    # def on_validation_epoch_end(self):
-    #     f1 = self.val_dice.compute()
-    #     self.log("val_f1_macro", f1, prog_bar=True)
-    #     self.val_dice.reset()
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.lr, amsgrad=True)
