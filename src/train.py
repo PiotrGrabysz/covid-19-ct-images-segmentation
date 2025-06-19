@@ -41,14 +41,20 @@ def main(args):
     # Augmentations
     train_transforms = albumentations.Compose(
         [
-            albumentations.Rotate(limit=360, p=0.9, border_mode=cv2.BORDER_REPLICATE),
             albumentations.HorizontalFlip(p=0.5),
             albumentations.ElasticTransform(
-                alpha=300,  # Strength of the distortion
+                alpha=100,  # Strength of the distortion
                 sigma=10,  # Smoothing
                 interpolation=cv2.INTER_NEAREST,
                 border_mode=cv2.BORDER_REFLECT_101,
                 p=0.5,
+            ),
+            albumentations.Affine(
+                scale=(0.9, 1.1),
+                rotate=(-15, 15),
+                translate_percent=(0.05, 0.05),
+                shear=(-5, 5),
+                p=0.7
             ),
             albumentations.RandomSizedCrop(
                 min_max_height=(int(SOURCE_SIZE * 0.75), SOURCE_SIZE),
@@ -81,12 +87,11 @@ def main(args):
     model = UNet()
 
     trainer = Trainer(
-        max_epochs=5,
+        max_epochs=30,
         callbacks=[checkpoint_callback, early_stop_callback],
         logger=tensorboard_logger,
         log_every_n_steps=5,
     )
-    # optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=3)
     trainer.fit(model, train_dataloader, test_dataloader)
 
 
@@ -140,7 +145,7 @@ class UNet(LightningModule):
             activation=None,
         )
 
-        self.loss_fn = build_loss(alpha=0.2)
+        self.loss_fn = build_loss(alpha=0.5)
         self.lr = lr
 
         self.preconv = torch.nn.Conv2d(1, 3, kernel_size=1)
@@ -151,11 +156,9 @@ class UNet(LightningModule):
         return mask
 
     def training_step(self, batch, batch_idx):
-        print(f"DEBUG: in TRAIN step")
         return self.shared_step(batch, "train")
 
     def validation_step(self, batch, batch_idx):
-        print(f"DEBUG: in VAL step")
         return self.shared_step(batch, "val")
 
     def shared_step(self, batch, stage="train"):
