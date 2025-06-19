@@ -195,3 +195,4 @@ cython_debug/
 
 # project specific
 *.npy
+lightning_logs/
