@@ -28,7 +28,7 @@ checkpoint_callback = ModelCheckpoint(
 early_stop_callback = EarlyStopping(
     monitor=METRIC_TO_MONITOR,
     mode="max",
-    patience=3,  # stop if no improvement after 5 epochs
+    patience=6,  # stop if no improvement after 5 epochs
     verbose=True,
 )
 tensorboard_logger = TensorBoardLogger("lightning_logs", name="covid_segmentation")
@@ -187,7 +187,21 @@ class UNet(LightningModule):
         return loss
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.lr, amsgrad=True)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, amsgrad=True)
+        scheduler = {
+            'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer,
+                mode='max',  # since we want to maximize F1
+                factor=0.5,
+                patience=3,
+                verbose=True
+            ),
+            'monitor': METRIC_TO_MONITOR,  # must match log name
+            'interval': 'epoch',
+            'frequency': 1
+        }
+
+        return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
 
 def build_loss(alpha: float = 0.5):
