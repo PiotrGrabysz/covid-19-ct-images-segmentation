@@ -1,13 +1,15 @@
-import argparse
 import os
 from pathlib import Path
 
 import torch
+import typer
 from lightning import Trainer
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
+from typing_extensions import Annotated
 
 from src.data.data_loaders import build_data_loaders
+from src.loss import build_loss
 from src.model import UNet
 
 SOURCE_SIZE = 512
@@ -28,55 +30,62 @@ early_stop_callback = EarlyStopping(
 tensorboard_logger = TensorBoardLogger("lightning_logs", name="covid_segmentation")
 
 
-def main(args):
+def main(
+    train: Annotated[
+        Path, typer.Option(help="folder where the training data is saved")
+    ] = os.environ.get("SM_CHANNEL_TRAIN", "/opt/ml/input/data/training"),
+    test: Annotated[
+        Path, typer.Option(help="folder where the test data is saved")
+    ] = os.environ.get("SM_CHANNEL_TEST", "/opt/ml/input/data/test"),
+    batch_size: Annotated[
+        int, typer.Option(help="input batch size for training and testing")
+    ] = 24,
+    epoch: Annotated[int, typer.Option(help="Maximum number of epochs to train")] = 5,
+    lr: Annotated[float, typer.Option(help="learning rate")] = 0.001,
+    alpha: Annotated[
+        float,
+        typer.Option(
+            help=(
+                "proportion between Binary Cross Entropy and Dice loss. "
+                "alpha=1 is equal to BCE only and alpha=0 is equal to Dice only. "
+                "The value of alpha must be between 0 and 1."
+            )
+        ),
+    ] = 0.5,
+    encoder_depth: Annotated[
+        int, typer.Option(help="a number of stages used in encoder in range [3, 5]")
+    ] = 5,
+    dry_run: Annotated[bool, typer.Option(help="quickly check a single pass")] = False,
+):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Running on Device {device}")
 
     train_dataloader, test_dataloader = build_data_loaders(
-        train=args.train,
-        test=args.test,
-        batch_size=args.batch_size,
+        train=train,
+        test=test,
+        batch_size=batch_size,
         img_source_size=SOURCE_SIZE,
         img_target_size=TARGET_SIZE,
     )
 
-    model = UNet(metric_to_monitor=METRIC_TO_MONITOR)
+    loss_fn = build_loss(alpha=alpha)
+
+    model = UNet(
+        metric_to_monitor=METRIC_TO_MONITOR,
+        lr=lr,
+        encoder_depth=encoder_depth,
+        loss_fn=loss_fn,
+    )
 
     trainer = Trainer(
-        max_epochs=30,
+        max_epochs=epoch,
         callbacks=[checkpoint_callback, early_stop_callback],
         logger=tensorboard_logger,
         log_every_n_steps=5,
-        fast_dev_run=True,
+        fast_dev_run=dry_run,
     )
     trainer.fit(model, train_dataloader, test_dataloader)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "--train",
-        type=Path,
-        default=os.environ.get("SM_CHANNEL_TRAIN", "/opt/ml/input/data/training"),
-        metavar="TEXT",
-        help="folder where the training data is saved",
-    )
-    parser.add_argument(
-        "--test",
-        type=Path,
-        default=os.environ.get("SM_CHANNEL_TEST", "/opt/ml/input/data/test"),
-        metavar="TEXT",
-        help="folder where the test data is saved",
-    )
-    parser.add_argument(
-        "--batch-size",
-        type=int,
-        default=24,
-        metavar="N",
-        help="input batch size for training (default: 64)",
-    )
-
-    args = parser.parse_args()
-
-    main(args)
+    typer.run(main)

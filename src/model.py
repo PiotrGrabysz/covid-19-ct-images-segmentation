@@ -3,14 +3,15 @@ import torch
 from lightning import LightningModule
 
 from src import metrics
-from src.loss import build_loss
 
 
 class UNet(LightningModule):
     def __init__(
         self,
+        loss_fn,
         model_name: str = "efficientnet-b0",
         lr=0.001,
+        encoder_depth: int = 5,
         metric_to_monitor: str = "val_f1_glass_and_consolidation",
     ):
         super().__init__()
@@ -20,12 +21,13 @@ class UNet(LightningModule):
         self.model = smp.Unet(
             encoder_name=model_name,
             encoder_weights="imagenet",
+            encoder_depth=encoder_depth,
             in_channels=3,
             classes=4,
             activation=None,
         )
 
-        self.loss_fn = build_loss(alpha=0.5)
+        self.loss_fn = loss_fn
         self.lr = lr
 
         self.preconv = torch.nn.Conv2d(1, 3, kernel_size=1)
