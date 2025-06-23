@@ -169,25 +169,48 @@ class UNet(LightningModule):
         probs = torch.sigmoid(logits)
 
         self.log(f"{stage}_loss", loss, prog_bar=True)
+        self.log_metrics(probs, stage, true_masks)
+        return loss
+
+    def log_metrics(self, probs, stage, true_masks):
         self.log(
-            f"{stage}_f1_glass", metrics.fscore_glass(true_masks, probs), prog_bar=True
+            f"{stage}_f1_glass", metrics.f1score_glass(true_masks, probs), prog_bar=True
         )
         self.log(
             f"{stage}_f1_consolidation",
-            metrics.fscore_consolidation(true_masks, probs),
+            metrics.f1score_consolidation(true_masks, probs),
             prog_bar=True,
         )
         self.log(
             f"{stage}_f1_lungs_background",
-            metrics.fscore_lungs_other(true_masks, probs),
+            metrics.f1score_lungs_other(true_masks, probs),
             prog_bar=True,
         )
         self.log(
             f"{stage}_f1_glass_and_consolidation",
-            metrics.fscore_glass_and_consolidation(true_masks, probs),
+            metrics.f1score_glass_and_consolidation(true_masks, probs),
             prog_bar=True,
         )
-        return loss
+        self.log(
+            f"{stage}_precision_glass",
+            metrics.calculate_precision(true_masks, probs, "glass"),
+            prog_bar=True,
+        )
+        self.log(
+            f"{stage}_recall_glass",
+            metrics.calculate_recall(true_masks, probs, "glass"),
+            prog_bar=True,
+        )
+        self.log(
+            f"{stage}_precision_consolidation",
+            metrics.calculate_precision(true_masks, probs, "consolidation"),
+            prog_bar=True,
+        )
+        self.log(
+            f"{stage}_recall_consolidation",
+            metrics.calculate_recall(true_masks, probs, "consolidation"),
+            prog_bar=True,
+        )
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, amsgrad=True)
