@@ -2,11 +2,7 @@ from typing import Literal
 
 from torchmetrics.functional import f1_score, precision, recall
 
-
-class_to_idx = {
-    "glass": 0,
-    "consolidation": 1
-}
+class_to_idx = {"glass": 0, "consolidation": 1}
 
 
 def f1score_glass(y_true, y_pred):
@@ -51,10 +47,11 @@ def f1score_lungs_other(y_true, y_pred):
 
 def calculate_precision(y_true, y_pred, class_name: Literal["glass", "consolidation"]):
     class_idx = class_to_idx[class_name]
-    return precision(y_pred[:, class_idx, ...], y_true[:, class_idx, ...], task="binary")
+    return precision(
+        y_pred[:, class_idx, ...], y_true[:, class_idx, ...], task="binary"
+    )
 
 
 def calculate_recall(y_true, y_pred, class_name: Literal["glass", "consolidation"]):
     class_idx = class_to_idx[class_name]
     return recall(y_pred[:, class_idx, ...], y_true[:, class_idx, ...], task="binary")
-
