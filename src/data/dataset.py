@@ -27,7 +27,7 @@ class NumpyDataset(Dataset):
 
         return NumpyDataset(images, masks, transforms)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.images)
 
     def __getitem__(self, idx):
@@ -38,6 +38,9 @@ class NumpyDataset(Dataset):
             aug = self.transforms(image=image, mask=mask)
             image, mask = aug["image"], aug["mask"]
 
-        mask = torch.tensor(mask.permute(2, 0, 1), dtype=torch.float32)
+        try:
+            mask = mask.permute(2, 0, 1).double()
+        except AttributeError:
+            pass
 
         return image, mask
