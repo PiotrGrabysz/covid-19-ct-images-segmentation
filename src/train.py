@@ -8,6 +8,7 @@ from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
 from typing_extensions import Annotated
 
+from src.data.augmentation import AugmenentationConfig
 from src.data.data_loaders import build_data_loaders
 from src.loss import build_loss
 from src.model import UNet
@@ -47,11 +48,27 @@ def main(
         Path, typer.Option(help="directory where tensorboard saves logs)")
     ] = "/opt/ml/output/tensorboard",
     checkpoint_dir: str | None = os.environ.get("SM_MODEL_DIR"),
-    num_workers: Annotated[int, typer.Option(help="how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process. ")] = 0,
+    num_workers: Annotated[
+        int,
+        typer.Option(
+            help="how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process. "
+        ),
+    ] = 0,
     dry_run: Annotated[bool, typer.Option(help="quickly check a single pass")] = False,
+    disable_horizontal_flip: bool = False,
+    disable_elastic_transform: bool = False,
+    disable_affine: bool = False,
+    disable_random_sized_crop: bool = False,
 ):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Running on Device {device}")
+
+    augmentation_config = AugmenentationConfig(
+        horizontal_flip=not disable_horizontal_flip,
+        elastic_transform=not disable_elastic_transform,
+        affine=not disable_affine,
+        random_sized_crop=not disable_random_sized_crop,
+    )
 
     train_dataloader, test_dataloader = build_data_loaders(
         train=train,
@@ -59,6 +76,8 @@ def main(
         batch_size=batch_size,
         img_source_size=SOURCE_SIZE,
         img_target_size=TARGET_SIZE,
+        num_workers=num_workers,
+        augmentation_config=augmentation_config,
     )
 
     loss_fn = build_loss(alpha=alpha)
@@ -74,7 +93,10 @@ def main(
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=checkpoint_dir,
-        monitor=METRIC_TO_MONITOR, mode="max", save_top_k=1, filename="best-model"
+        monitor=METRIC_TO_MONITOR,
+        mode="max",
+        save_top_k=1,
+        filename="best-model",
     )
 
     early_stop_callback = EarlyStopping(
