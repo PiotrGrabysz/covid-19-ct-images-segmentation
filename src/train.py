@@ -27,7 +27,6 @@ early_stop_callback = EarlyStopping(
     patience=6,  # stop if no improvement after 5 epochs
     verbose=True,
 )
-tensorboard_logger = TensorBoardLogger("lightning_logs", name="covid_segmentation")
 
 
 def main(
@@ -55,6 +54,9 @@ def main(
     encoder_depth: Annotated[
         int, typer.Option(help="a number of stages used in encoder in range [3, 5]")
     ] = 5,
+    tensorboard_dir: Annotated[
+        Path, typer.Option(help="directory where tensorboard saves logs)")
+    ] = "/opt/ml/output/tensorboard",
     dry_run: Annotated[bool, typer.Option(help="quickly check a single pass")] = False,
 ):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -76,6 +78,8 @@ def main(
         encoder_depth=encoder_depth,
         loss_fn=loss_fn,
     )
+
+    tensorboard_logger = TensorBoardLogger(tensorboard_dir, name="covid_segmentation")
 
     trainer = Trainer(
         max_epochs=epoch,
