@@ -46,13 +46,8 @@ def main(
     tensorboard_dir: Annotated[
         Path, typer.Option(help="directory where tensorboard saves logs)")
     ] = "/opt/ml/output/tensorboard",
-    sagemaker_run_name: Annotated[
-        str | None,
-        typer.Option(
-            help="name of the sagemaker experiment run. If it is not specified, one is auto generated."
-        ),
-    ] = None,
     checkpoint_dir: str | None = os.environ.get("SM_MODEL_DIR"),
+    num_workers: Annotated[int, typer.Option(help="how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process. ")] = 0,
     dry_run: Annotated[bool, typer.Option(help="quickly check a single pass")] = False,
 ):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
