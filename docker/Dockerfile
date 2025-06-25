@@ -1,0 +1,7 @@
+FROM 763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:2.6.0-cpu-py312
+
+COPY requirements.txt /tmp/requirements.txt
+
+# Install additional Python packages
+RUN pip install --upgrade pip --root-user-action ignore && \
+    pip install -r /tmp/requirements.txt --root-user-action ignore
