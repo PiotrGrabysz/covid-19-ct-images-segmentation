@@ -11,7 +11,8 @@ from src.data.dataset import NumpyDataset
 def build_data_loaders(
     train: Path,
     test: Path,
-    batch_size: int,
+    train_batch_size: int,
+    test_batch_size: int,
     img_source_size: int,
     img_target_size: int,
     elastic_transform_strength: float = 100,
@@ -30,10 +31,10 @@ def build_data_loaders(
     test_dataset = NumpyDataset.from_path(test, transforms=inference_transforms)
 
     train_dataloader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers
+        train_dataset, batch_size=train_batch_size, shuffle=True, num_workers=num_workers
     )
     test_dataloader = DataLoader(
-        test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers
+        test_dataset, batch_size=test_batch_size, shuffle=False, num_workers=num_workers
     )
 
     return train_dataloader, test_dataloader

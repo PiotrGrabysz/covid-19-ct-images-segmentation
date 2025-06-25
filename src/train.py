@@ -26,8 +26,11 @@ def main(
     test: Annotated[
         Path, typer.Option(help="folder where the test data is saved")
     ] = os.environ.get("SM_CHANNEL_TEST", "/opt/ml/input/data/test"),
-    batch_size: Annotated[
-        int, typer.Option(help="input batch size for training and testing")
+    train_batch_size: Annotated[
+        int, typer.Option(help="input batch size for training")
+    ] = 24,
+    test_batch_size: Annotated[
+        int, typer.Option(help="input batch size for testing")
     ] = 24,
     epoch: Annotated[int, typer.Option(help="Maximum number of epochs to train")] = 5,
     lr: Annotated[float, typer.Option(help="learning rate")] = 0.001,
@@ -80,7 +83,8 @@ def main(
     train_dataloader, test_dataloader = build_data_loaders(
         train=train,
         test=test,
-        batch_size=batch_size,
+        train_batch_size=train_batch_size,
+        test_batch_size=test_batch_size,
         img_source_size=SOURCE_SIZE,
         img_target_size=TARGET_SIZE,
         num_workers=num_workers,
