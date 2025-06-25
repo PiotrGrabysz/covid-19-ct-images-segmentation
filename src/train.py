@@ -18,17 +18,6 @@ TARGET_SIZE = 256
 
 METRIC_TO_MONITOR = "val_f1_glass_and_consolidation"
 
-checkpoint_callback = ModelCheckpoint(
-    monitor=METRIC_TO_MONITOR, mode="max", save_top_k=1, filename="best-model"
-)
-
-early_stop_callback = EarlyStopping(
-    monitor=METRIC_TO_MONITOR,
-    mode="max",
-    patience=6,  # stop if no improvement after 5 epochs
-    verbose=True,
-)
-
 
 def main(
     train: Annotated[
@@ -64,6 +53,7 @@ def main(
             help="name of the sagemaker experiment run. If it is not specified, one is auto generated."
         ),
     ] = None,
+    checkpoint_dir: str | None = os.environ.get("SM_MODEL_DIR"),
     dry_run: Annotated[bool, typer.Option(help="quickly check a single pass")] = False,
 ):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -87,6 +77,18 @@ def main(
     )
 
     tensorboard_logger = TensorBoardLogger(tensorboard_dir, name="covid_segmentation")
+
+    checkpoint_callback = ModelCheckpoint(
+        dirpath=checkpoint_dir,
+        monitor=METRIC_TO_MONITOR, mode="max", save_top_k=1, filename="best-model"
+    )
+
+    early_stop_callback = EarlyStopping(
+        monitor=METRIC_TO_MONITOR,
+        mode="max",
+        patience=6,  # stop if no improvement after 5 epochs
+        verbose=True,
+    )
 
     trainer = Trainer(
         max_epochs=epoch,
