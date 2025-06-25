@@ -8,7 +8,7 @@ from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
 from typing_extensions import Annotated
 
-from src.data.augmentation import AugmenentationConfig
+from src.data.augmentation import AugmentationProbability
 from src.data.data_loaders import build_data_loaders
 from src.loss import build_loss
 from src.model import UNet
@@ -55,24 +55,26 @@ def main(
         ),
     ] = 0,
     dry_run: Annotated[bool, typer.Option(help="quickly check a single pass")] = False,
-    disable_horizontal_flip: bool = False,
-    disable_elastic_transform: bool = False,
-    disable_affine: bool = False,
-    disable_brightness: bool = False,
-    disable_noise: bool = False,
-    disable_random_sized_crop: bool = False,
-    elastic_transform_strength: Annotated[float, typer.Option(help="strength of the Elastic Transform augmentation")] = 100
+    horizontal_flip: float = 0.5,
+    elastic_transform: float = 0.5,
+    affine: float = 0.7,
+    brightness: float = 0.5,
+    noise: float = 0.5,
+    random_sized_crop: int = 1,
+    elastic_transform_strength: Annotated[
+        float, typer.Option(help="strength of the Elastic Transform augmentation")
+    ] = 100,
 ):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Running on Device {device}")
 
-    augmentation_config = AugmenentationConfig(
-        horizontal_flip=not disable_horizontal_flip,
-        elastic_transform=not disable_elastic_transform,
-        affine=not disable_affine,
-        brightness=not disable_brightness,
-        noise=not disable_noise,
-        random_sized_crop=not disable_random_sized_crop,
+    augmentation_probability = AugmentationProbability(
+        horizontal_flip=horizontal_flip,
+        elastic_transform=elastic_transform,
+        affine=affine,
+        brightness=brightness,
+        noise=noise,
+        random_sized_crop=random_sized_crop,
     )
 
     train_dataloader, test_dataloader = build_data_loaders(
@@ -83,7 +85,7 @@ def main(
         img_target_size=TARGET_SIZE,
         num_workers=num_workers,
         elastic_transform_strength=elastic_transform_strength,
-        augmentation_config=augmentation_config,
+        augmentation_probability=augmentation_probability,
     )
 
     loss_fn = build_loss(alpha=alpha)
