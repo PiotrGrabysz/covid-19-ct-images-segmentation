@@ -6,6 +6,7 @@ import typer
 from lightning import Trainer
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
+from sagemaker.experiments.run import Run, load_run
 from typing_extensions import Annotated
 
 from src.data.data_loaders import build_data_loaders
@@ -57,6 +58,12 @@ def main(
     tensorboard_dir: Annotated[
         Path, typer.Option(help="directory where tensorboard saves logs)")
     ] = "/opt/ml/output/tensorboard",
+    sagemaker_run_name: Annotated[
+        str | None,
+        typer.Option(
+            help="name of the sagemaker experiment run. If it is not specified, one is auto generated."
+        ),
+    ] = None,
     dry_run: Annotated[bool, typer.Option(help="quickly check a single pass")] = False,
 ):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -89,6 +96,21 @@ def main(
         fast_dev_run=dry_run,
     )
     trainer.fit(model, train_dataloader, test_dataloader)
+
+    with Run(
+        experiment_name="ct-images-segmentation", run_name=sagemaker_run_name
+    ) as run:
+        run.log_parameters(
+            {
+                "learning_rate": lr,
+                "alpha": alpha,
+                "encoder_depth": encoder_depth,
+                "batch_size": batch_size,
+                "epoch": epoch,
+            }
+        )
+        # run.log_metric("final_accuracy", 0.87)
+        # run.log_file("model_artifact.tar.gz", source="/opt/ml/model")
 
 
 if __name__ == "__main__":
