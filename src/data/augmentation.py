@@ -65,6 +65,10 @@ def build_train_transforms(
                 interpolation=cv2.INTER_NEAREST,
             )
         )
+    else:
+        transforms.append(albumentations.Resize(
+                target_size, target_size, interpolation=cv2.INTER_NEAREST
+            ))
 
     transforms.append(ToTensorV2())
 
