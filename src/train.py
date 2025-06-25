@@ -99,7 +99,7 @@ def main(
     trainer.fit(model, train_dataloader, test_dataloader)
 
     best_metric = checkpoint_callback.best_model_score
-    print(f"Final {METRIC_TO_MONITOR}: {best_metric}")
+    print(f"Best {METRIC_TO_MONITOR}: {best_metric}")
 
 
 if __name__ == "__main__":
