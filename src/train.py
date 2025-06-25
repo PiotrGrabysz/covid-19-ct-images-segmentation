@@ -99,6 +99,9 @@ def main(
     )
     trainer.fit(model, train_dataloader, test_dataloader)
 
+    best_metric = checkpoint_callback.best_model_score
+    print(f"Final {METRIC_TO_MONITOR}: {best_metric}")
+
     with Run(
         experiment_name="ct-images-segmentation", run_name=sagemaker_run_name
     ) as run:
