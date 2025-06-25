@@ -14,11 +14,12 @@ def build_data_loaders(
     batch_size: int,
     img_source_size: int,
     img_target_size: int,
+    elastic_transform_strength: float=100,
     augmentation_config: AugmenentationConfig = AugmenentationConfig(),
     num_workers: int = 0,
 ) -> tuple[DataLoader, DataLoader]:
     train_transforms = build_train_transforms(
-        img_source_size, img_target_size, config=augmentation_config
+        img_source_size, img_target_size, config=augmentation_config, elastic_transform_strength=elastic_transform_strength
     )
     train_dataset = NumpyDataset.from_path(train, transforms=train_transforms)
 

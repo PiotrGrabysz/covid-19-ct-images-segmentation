@@ -61,6 +61,7 @@ def main(
     disable_brightness: bool = False,
     disable_noise: bool = False,
     disable_random_sized_crop: bool = False,
+    elastic_transform_strength: Annotated[float, typer.Option(help="strength of the Elastic Transform augmentation")] = 100
 ):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Running on Device {device}")
@@ -81,6 +82,7 @@ def main(
         img_source_size=SOURCE_SIZE,
         img_target_size=TARGET_SIZE,
         num_workers=num_workers,
+        elastic_transform_strength=elastic_transform_strength,
         augmentation_config=augmentation_config,
     )
 

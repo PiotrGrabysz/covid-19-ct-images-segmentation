@@ -18,6 +18,7 @@ class AugmenentationConfig:
 def build_train_transforms(
     source_size: int,
     target_size: int,
+    elastic_transform_strength: float=100,
     config: AugmenentationConfig = AugmenentationConfig(),
 ):
     transforms = []
@@ -27,7 +28,7 @@ def build_train_transforms(
     if config.elastic_transform:
         transforms.append(
             albumentations.ElasticTransform(
-                alpha=100,  # Strength of the distortion
+                alpha=elastic_transform_strength,  # Strength of the distortion
                 sigma=10,  # Smoothing
                 interpolation=cv2.INTER_NEAREST,
                 border_mode=cv2.BORDER_REFLECT_101,
