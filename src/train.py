@@ -6,7 +6,6 @@ import typer
 from lightning import Trainer
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
-from sagemaker.experiments.run import Run, load_run
 from typing_extensions import Annotated
 
 from src.data.data_loaders import build_data_loaders
@@ -101,21 +100,6 @@ def main(
 
     best_metric = checkpoint_callback.best_model_score
     print(f"Final {METRIC_TO_MONITOR}: {best_metric}")
-
-    with Run(
-        experiment_name="ct-images-segmentation", run_name=sagemaker_run_name
-    ) as run:
-        run.log_parameters(
-            {
-                "learning_rate": lr,
-                "alpha": alpha,
-                "encoder_depth": encoder_depth,
-                "batch_size": batch_size,
-                "epoch": epoch,
-            }
-        )
-        # run.log_metric("final_accuracy", 0.87)
-        # run.log_file("model_artifact.tar.gz", source="/opt/ml/model")
 
 
 if __name__ == "__main__":
