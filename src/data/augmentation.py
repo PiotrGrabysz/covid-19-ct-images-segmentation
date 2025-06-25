@@ -10,6 +10,8 @@ class AugmenentationConfig:
     horizontal_flip: bool = True
     elastic_transform: bool = True
     affine: bool = True
+    brightness: bool = True
+    noise: bool = True
     random_sized_crop: bool = True
 
 
@@ -43,6 +45,16 @@ def build_train_transforms(
                 p=0.7,
             )
         )
+
+    if config.brightness:
+        transforms.append(
+            albumentations.RandomBrightnessContrast(
+                brightness_limit=0.2, contrast_limit=0.2, p=0.5
+            )
+        )
+
+    if config.noise:
+        transforms.append(albumentations.GaussNoise(std_range=(0.01, 0.05), p=0.5))
 
     if config.random_sized_crop:
         transforms.append(

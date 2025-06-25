@@ -58,6 +58,8 @@ def main(
     disable_horizontal_flip: bool = False,
     disable_elastic_transform: bool = False,
     disable_affine: bool = False,
+    disable_brightness: bool = False,
+    disable_noise: bool = False,
     disable_random_sized_crop: bool = False,
 ):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -67,6 +69,8 @@ def main(
         horizontal_flip=not disable_horizontal_flip,
         elastic_transform=not disable_elastic_transform,
         affine=not disable_affine,
+        brightness=not disable_brightness,
+        noise=not disable_noise,
         random_sized_crop=not disable_random_sized_crop,
     )
 
