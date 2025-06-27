@@ -3,12 +3,13 @@ import torch
 from lightning import LightningModule
 
 from src import metrics
+from src.loss import build_loss
 
 
 class UNet(LightningModule):
     def __init__(
         self,
-        loss_fn,
+        loss_fn=None,
         model_name: str = "efficientnet-b0",
         lr=0.001,
         encoder_depth: int = 5,
@@ -27,7 +28,10 @@ class UNet(LightningModule):
             activation=None,
         )
 
+        if loss_fn is None:
+            loss_fn = build_loss()
         self.loss_fn = loss_fn
+
         self.lr = lr
 
         self.preconv = torch.nn.Conv2d(1, 3, kernel_size=1)
