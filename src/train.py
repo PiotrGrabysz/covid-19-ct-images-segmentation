@@ -34,6 +34,7 @@ def main(
     ] = 24,
     epoch: Annotated[int, typer.Option(help="Maximum number of epochs to train")] = 5,
     lr: Annotated[float, typer.Option(help="learning rate")] = 0.001,
+    architecture: Annotated[str, typer.Option(help="the network used to train the segmentation model. You can choose from 'unet', 'unet++', 'fpn', 'pspnet'")] = "unet",
     alpha: Annotated[
         float,
         typer.Option(

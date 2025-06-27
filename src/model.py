@@ -1,3 +1,5 @@
+from typing import Literal
+
 import segmentation_models_pytorch as smp
 import torch
 from lightning import LightningModule
@@ -10,7 +12,8 @@ class UNet(LightningModule):
     def __init__(
         self,
         loss_fn=None,
-        model_name: str = "efficientnet-b0",
+        architecture: Literal["unet", "unet++", "fpn", "pspnet"] = "unet",
+        backbone_name: str = "efficientnet-b0",
         lr=0.001,
         encoder_depth: int = 5,
         metric_to_monitor: str = "val_f1_glass_and_consolidation",
@@ -19,8 +22,8 @@ class UNet(LightningModule):
         self.save_hyperparameters()
 
         # self.save_hyperparameters()
-        self.model = smp.Unet(
-            encoder_name=model_name,
+        self.model = model_mapping[architecture](
+            encoder_name=backbone_name,
             encoder_weights="imagenet",
             encoder_depth=encoder_depth,
             in_channels=3,
@@ -116,3 +119,11 @@ class UNet(LightningModule):
         }
 
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
+
+
+model_mapping = {
+    "unet": smp.Unet,
+    "unet++": smp.UnetPlusPlus,
+    "fpn": smp.FPN,
+    "pspnet": smp.PSPNet
+}
