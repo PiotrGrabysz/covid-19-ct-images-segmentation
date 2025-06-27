@@ -48,6 +48,7 @@ def main(
     encoder_depth: Annotated[
         int, typer.Option(help="a number of stages used in encoder in range [3, 5]")
     ] = 5,
+    backbone: Annotated[str, "backbone used in the encoder"] = "efficientnet-b0",
     tensorboard_dir: Annotated[
         Path, typer.Option(help="directory where tensorboard saves logs)")
     ] = "/opt/ml/output/tensorboard",
@@ -100,6 +101,7 @@ def main(
         lr=lr,
         encoder_depth=encoder_depth,
         loss_fn=loss_fn,
+        backbone_name=backbone,
     )
 
     tensorboard_logger = TensorBoardLogger(tensorboard_dir, name="covid_segmentation")
