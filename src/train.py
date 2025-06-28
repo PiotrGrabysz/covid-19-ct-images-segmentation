@@ -8,10 +8,10 @@ from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
 from typing_extensions import Annotated
 
-from src.data.augmentation import AugmentationProbability
-from src.data.data_loaders import build_data_loaders
-from src.loss import build_loss
-from src.model import UNet
+from data.augmentation import AugmentationProbability
+from data.data_loaders import build_data_loaders
+from loss import build_loss
+from model import UNet
 
 SOURCE_SIZE = 512
 TARGET_SIZE = 256

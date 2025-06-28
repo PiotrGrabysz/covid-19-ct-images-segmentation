@@ -2,10 +2,10 @@ from pathlib import Path
 
 from torch.utils.data import DataLoader
 
-from src.data.augmentation import (AugmentationProbability,
+from data.augmentation import (AugmentationProbability,
                                    build_inference_transforms,
                                    build_train_transforms)
-from src.data.dataset import NumpyDataset
+from data.dataset import NumpyDataset
 
 
 def build_data_loaders(

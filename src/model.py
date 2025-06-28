@@ -4,8 +4,8 @@ import segmentation_models_pytorch as smp
 import torch
 from lightning import LightningModule
 
-from src import metrics
-from src.loss import build_loss
+import metrics
+from loss import build_loss
 
 
 class UNet(LightningModule):

@@ -1,3 +1,4 @@
+import logging
 import io
 import os
 from typing import Any
@@ -5,13 +6,18 @@ from typing import Any
 import numpy as np
 import torch
 
-from src.data.augmentation import build_inference_transforms
-from src.model import UNet
+from data.augmentation import build_inference_transforms
+from model import UNet
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def model_fn(model_dir: str) -> torch.nn.Module:
     model_path = os.path.join(model_dir, "best-model.ckpt")
-    model = UNet.load_from_checkpoint(model_path)
+    model = UNet(architecture="fpn")
+    model = model.load_from_checkpoint(model_path)
+    logger.info("Model loaded")
 
     model.eval()
     model.freeze()
@@ -26,6 +32,9 @@ def input_fn(request_body: Any, request_content_type: str) -> torch.Tensor:
         images = np.load(io.BytesIO(request_body))
     else:
         raise ValueError(f"Unsupported content type: {request_content_type}")
+
+    if images.ndim == 3:
+        images = images[np.newaxis, ...]  
 
     transforms = build_inference_transforms(target_size=256)
     image_batch = torch.tensor(
