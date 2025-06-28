@@ -15,8 +15,7 @@ logger.setLevel(logging.INFO)
 
 def model_fn(model_dir: str) -> torch.nn.Module:
     model_path = os.path.join(model_dir, "best-model.ckpt")
-    model = UNet(architecture="fpn")
-    model = model.load_from_checkpoint(model_path)
+    model = UNet.load_from_checkpoint(model_path)
     logger.info("Model loaded")
 
     model.eval()
