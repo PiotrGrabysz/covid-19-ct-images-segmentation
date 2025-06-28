@@ -27,7 +27,7 @@ class UNet(LightningModule):
             encoder_weights="imagenet",
             encoder_depth=encoder_depth,
             in_channels=3,
-            classes=4,
+            classes=2,
             activation=None,
         )
 
