@@ -33,7 +33,7 @@ to my repository called `ct-images-segmentation`:
 ```shell
 # Assuming you are in ./docker folder
 $ pip install sagemaker-studio-image-build
-$ sm-docker build . --repository ct-images-segmentation:latest
+$ sm-docker build . --file docker/Dockerfile --repository ct-images-segmentation:latest
 ```
 
 ![ecr_private_repo.png](../figures/documentation/docker/ecr_private_repo.png)

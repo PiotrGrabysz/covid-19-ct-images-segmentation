@@ -1,0 +1,59 @@
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Ignore Jupyter/IPython notebooks and history
+*.ipynb
+.ipynb_checkpoints/
+.history
+
+# Ignore version control folders
+.git/
+.gitignore
+
+# Ignore SageMaker metadata and checkpoints
+*.ckpt
+*.pth
+*.pt
+*.tar.gz
+*.onnx
+*.h5
+
+# Ignore temporary/system files
+*.DS_Store
+*.swp
+*.bak
+*~
+.env
+.envrc
+.vscode/
+.idea/
+
+# Ignore test files and logs
+tests/
+test_*.py
+*.log
+
+# Ignore datasets or large binaries
+data/
+*.npy
+*.npz
+*.csv
+*.json
+*.png
+*.jpg
+
+# Ignore model output and experiment tracking
+outputs/
+runs/
+wandb/
+mlruns/
+lightning_logs/
+
+# Ignore built distributions
+dist/
+build/
+*.egg-info/
