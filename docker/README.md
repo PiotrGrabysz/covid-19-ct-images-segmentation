@@ -32,8 +32,19 @@ to my repository called `ct-images-segmentation`:
 
 ```shell
 # Assuming you are in ./docker folder
-$ pip install sagemaker-studio-image-build
-$ sm-docker build . --file docker/Dockerfile --repository ct-images-segmentation:latest
+pip install sagemaker-studio-image-build
+sm-docker build . --file docker/Dockerfile --repository ct-images-segmentation:latest
 ```
 
 ![ecr_private_repo.png](../figures/documentation/docker/ecr_private_repo.png)
+
+I also pushed a container with a tag `gpu-latest`, which was based on a pytorch image with GPU. 
+I used it to train a model on a `ml.p3.2xlarge` machine.
+```shell
+sm-docker build . --file docker/Dockerfile-gpu --repository ct-images-segmentation-inference:gpu-latest
+```
+
+Lastly, I also created a container for inference endpoint, which is based on `pytorch-inference`:
+```shell
+sm-docker build . --file docker/Dockerfile-inference --repository ct-images-segmentation-inference:latest
+```
